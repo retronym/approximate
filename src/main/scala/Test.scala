@@ -48,14 +48,17 @@ class Scratch {
     var hidden: List[Symbol] = Nil
     val seen = collection.mutable.Set[Symbol]()
     for (t <- tp) {
-      val bts = t.baseTypeSeq.toList
-      for (b <- bts) {
-        for (t <- b) {
-          val sym = t.typeSymbolDirect
-          if (sym.hasTransOwner(ownerOfHidden) && sym != ownerOfHidden) {
-            if (!seen(sym)) {
-              seen += sym
-              hidden ::= sym
+      val sym = tp.typeSymbolDirect
+      if (sym.hasTransOwner(ownerOfHidden)) {
+        val bts = t.baseTypeSeq.toList
+        for (b <- bts) {
+          for (t <- b) {
+            val baseTypeElementSym = t.typeSymbolDirect
+            if (baseTypeElementSym.hasTransOwner(ownerOfHidden) && baseTypeElementSym != ownerOfHidden) {
+              if (!seen(baseTypeElementSym)) {
+                seen += baseTypeElementSym
+                hidden ::= baseTypeElementSym
+              }
             }
           }
         }
