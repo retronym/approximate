@@ -33,6 +33,9 @@ class Scratch {
     exitingTyper {
       assertEquals("FBound[FBound[_0]] forSome { type _0 }", packAndApproximate(symbolOf[FBound[_]].initialize.tpe_*, symbolOf[FBound[_]]))
       assertEquals("Bounded[String,String]", packAndApproximate(symbolOf[Bounded[_, _]].initialize.tpe_*, symbolOf[Bounded[_, _]]))
+      // TODO type arguments [Any,Any] do not conform to class Bounded's type parameter bounds [A <: String,B <: A]
+      //      We'd like `Bounded[String, String]
+      // assertEquals("Bounded[String,String]", packAndApproximate(typeOf[Bounded[_, _]], symbolOf[Bounded[_, _]]))
       assertEquals("Option[Entity[A]#Inner]", packAndApproximate(typeOf[Entity[Any]].decl(TypeName("C")).info, symbolOf[Entity[_]]))
     }
     assert(!reporter.hasErrors)
