@@ -10,6 +10,9 @@ class Bounded1[A <: Bounded[_, _]]
 trait Foo1[M <: String, P <: Foo1[M, _]]
 trait Foo2[M <: String, P <: Foo2[M, P]]
 
+trait M[_]
+class BoundedHK[A[X] <: M[X], B <: A[String]]
+
 class Entity[A] {
 
   class Inner
@@ -53,6 +56,8 @@ class Scratch {
 
       check("Foo1[String,Foo1[String,_0]] forSome { type _0 }", symbolOf[Foo1[_, _]].initialize.tpe_*)
       check("Foo2[String,Foo2[String,_0]] forSome { type _0 }", symbolOf[Foo2[_, _]].initialize.tpe_*)
+
+      check("BoundedHK[[X]M[X],M[String]]", symbolOf[BoundedHK[Nothing, Nothing]].initialize.tpe_*)
     }
     assert(!reporter.hasErrors)
   }
@@ -97,15 +102,16 @@ class Scratch {
             case _ =>
               mapOver(tr)
           }
-        case tr@TypeRef(pre, sym, Nil) if sym.isAbstractType =>
+        case tr@TypeRef(pre, sym, args) if sym.isAbstractType && !sym.isHigherOrderTypeParameter =>
+          val args1 = mapOverArgs(pre, args, sym.typeParams)
           abstractTypeStack.find(_._2 eq sym) match {
             case Some((pre, sym)) =>
-              TypeRef(NoPrefix, newExistentialFor(sym), Nil)
+              TypeRef(NoPrefix, newExistentialFor(sym), args1)
             case None =>
               abstractTypeStack.push((pre, sym))
               try {
                 val bound = if (variance.isContravariant) sym.info.bounds.lo else sym.info.bounds.hi
-                val tp1 = bound.asSeenFrom(pre, sym.owner)
+                val tp1 = appliedType(bound.asSeenFrom(pre, sym.owner), args)
                 if (tp1 ne tr) apply(tp1) else tp1
               } finally abstractTypeStack.pop()
           }
